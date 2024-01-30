@@ -1,0 +1,20 @@
+Metadata-Version: 2.1
+Name: building-generator
+Version: 0.1
+Summary: Library for drawing building
+Home-page: UNKNOWN
+Author: Tae Young Choi
+Author-email: tyul0529@naver.com
+License: MIT
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Natural Language :: English
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: Implementation :: CPython
+License-File: LICENSE
+
+UNKNOWN
+

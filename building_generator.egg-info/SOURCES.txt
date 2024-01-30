@@ -1,0 +1,9 @@
+LICENSE
+README.md
+setup.py
+buildingGenerator/building.py
+building_generator.egg-info/PKG-INFO
+building_generator.egg-info/SOURCES.txt
+building_generator.egg-info/dependency_links.txt
+building_generator.egg-info/requires.txt
+building_generator.egg-info/top_level.txt
