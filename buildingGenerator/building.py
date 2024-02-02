@@ -1,5 +1,5 @@
 from maskCanvas import line_seg, canvas, point
-from math import cos, sin, pi
+from math import tan, cos, sin, acos, atan, pi
 import copy
 
 #
@@ -14,8 +14,8 @@ class building:
         self.floor_num = floor_num
         self.scale = scale
 
-    def getPoint(self, point_, pitch, yaw, length):
-        return point(point_.x + cos(yaw)*length, point_.y - sin(yaw)*cos(pitch)*length)
+    def getPoint(self, point_, pitch, yaw, length, roll = 0):
+        return point(point_.x + cos(roll)*cos(yaw)*length, point_.y - (sin(yaw)*cos(roll)+sin(roll)/tan(pitch))*sin(pitch)*length)
 
     def getWidthPoint(self, point_, length):
         return self.getPoint(point_, self.pitch, self.yaw + pi/2, length)
@@ -24,18 +24,18 @@ class building:
         return self.getPoint(point_, self.pitch, self.yaw, length)
 
     def getHeightPoint(self, point_, length):
-        return self.getPoint(point_, self.pitch-pi/2, pi/2, length)
+        return self.getPoint(point_, self.pitch+pi/2, pi/2, length)
 
     def draw(self, canvas):
         return canvas
 
 class villa(building):
-    roof_angle = 0.25
+    roof_angle = 0.2
     def __init__(self, build_point, pitch, yaw, width_num, depth_num, floor_num, scale=1):
         super().__init__(build_point, pitch, yaw, width_num, depth_num, floor_num, scale)
 
     def getRoofPoint(self, point_, length):
-        return self.getPoint(point_, self.pitch - self.roof_angle, self.yaw, length)
+        return self.getPoint(point_, self.pitch, self.yaw, length, roll = self.roof_angle)
 
     def drawRoof(self, canvas):
         lines = []
@@ -66,11 +66,16 @@ class villa(building):
         point1 = self.build_point
         lines.append([point1, self.getHeightPoint(point1, self.scale*10*self.floor_num)])
         point1 = self.getWidthPoint(self.build_point, self.scale*12*self.width_num)
+        lines.append([self.build_point, point1])
         lines.append([point1, self.getHeightPoint(point1, self.scale*10*self.floor_num)])
         point1 = self.getDepthPoint(self.build_point, self.scale*8*self.depth_num)
-        lines.append([point1, self.getHeightPoint(point1, self.scale*10*self.floor_num)])
+        lines.append([point1, self.getHeightPoint(point1, self.scale*(10*self.floor_num+tan(self.roof_angle)*8*self.depth_num))])
+        lines.append([self.build_point, point1])
+
+
+
+
         canvas.registerLineSegs(lines)
-        canvas.registerLineSeg([[71,79],[99,14]])
         return canvas
 
 
