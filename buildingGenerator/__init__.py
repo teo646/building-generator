@@ -1,1 +1,1 @@
-from .building import villa
+from .building import standard, opposite_dir
