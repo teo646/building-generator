@@ -1,1 +1,1 @@
-from .building import standard, opposite_dir
+from .building import standard, opposite_dir, integrated

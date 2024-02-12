@@ -2,6 +2,7 @@ from maskCanvas import line_seg, canvas, point, arc
 import numpy as np
 from math import tan, cos, sin, acos, atan, pi
 import copy
+from maskCanvas import canvas
 
 #
 class building:
@@ -36,6 +37,8 @@ class standard(building):
     floor_height = 12
     window_height = 7
     window_width = 2
+    side_eavs_len = 0
+    front_eavs_len = 5
     def __init__(self, build_point, pitch, yaw, width_num, depth_num, floor_num, scale=1):
         super().__init__(build_point, pitch, yaw, width_num, depth_num, floor_num, scale)
 
@@ -64,17 +67,18 @@ class standard(building):
     def drawRoof(self, canvas, build_point):
         canvas.changePen((11, 44, 154), 0.5)
         lines = []
-        top_point = self.getRoofPoint(build_point, self.width_unit*self.depth_num/cos(self.roof_angle))
-        down_point = self.getRoofPoint(top_point, -(self.width_unit*self.depth_num/cos(self.roof_angle)+5))
+        self.getHeightPoint(self.build_point, self.floor_height*(self.floor_num+0.5))
+        top_point = self.getRoofPoint(self.getHeightPoint(self.getWidthPoint(self.build_point, -self.side_eavs_len), self.floor_height*(self.floor_num+0.5)), self.width_unit*self.depth_num/cos(self.roof_angle))
+        down_point = self.getRoofPoint(top_point, -(self.width_unit*self.depth_num/cos(self.roof_angle)+self.front_eavs_len))
         mask_path = [top_point,
                     down_point,
-                    self.getWidthPoint(down_point, self.width_unit*self.width_num),
-                    self.getWidthPoint(top_point, self.width_unit*self.width_num)]
+                    self.getWidthPoint(down_point, self.width_unit*self.width_num+self.side_eavs_len),
+                    self.getWidthPoint(top_point, self.width_unit*self.width_num+self.side_eavs_len)]
         lines.append([top_point, down_point])
         lines.append([top_point, mask_path[3]])
         lines.append([down_point, mask_path[2]])
 
-        for i in range(self.width_unit*self.width_num):
+        for i in range(self.width_unit*self.width_num+self.side_eavs_len):
             top_point = self.getWidthPoint(top_point, 1)
             down_point = self.getWidthPoint(down_point, 1)
             lines.append([top_point, down_point])
@@ -210,7 +214,7 @@ class standard(building):
 
     def draw(self, canvas):
         canvas.changePen((80,80,80), 0.3)
-        canvas = self.drawRoof(canvas, self.getHeightPoint(self.build_point, self.floor_height*(self.floor_num+0.5)))
+        canvas = self.drawRoof(canvas, self.build_point)
         canvas = self.drawWall(canvas, self.build_point)
         canvas = self.drawStructure(canvas, self.build_point)
 
@@ -241,4 +245,46 @@ class opposite_dir(standard):
         canvas = self.drawStructure(canvas, self.build_point)
 
         return canvas
+
+class integrated(standard):
+    building_thickness_num = 3
+    def __init__(self, build_point, pitch, yaw, width_num, depth_num, floor_num, scale=1):
+        super().__init__(build_point, pitch, yaw, width_num, depth_num, floor_num, scale)
+
+    def getMask(self, isRight):
+        point1 = self.build_point
+        point2 = self.getHeightPoint(self.build_point, (self.floor_num+0.5)*self.floor_height-self.front_eavs_len*tan(self.roof_angle))
+        point3 = self.getDepthPoint(self.getWidthPoint(point2, -self.front_eavs_len*cos(self.roof_angle)), -self.front_eavs_len*cos(self.roof_angle))
+        point4 = self.getHeightPoint(self.getDepthPoint(self.getWidthPoint(point2,self.building_thickness_num*self.width_unit),self.building_thickness_num*self.width_unit), tan(self.roof_angle)*(self.width_unit*self.building_thickness_num + self.front_eavs_len))
+        offset = (isRight - 0.5)*200*self.scale
+        point5 = point(point4.x+offset, point4.y)
+        point6 = point(point1.x+offset, point1.y)
+        point2 = point(point1.x, point3.y)
+        mask = [point1, point2, point3, point4, point5, point6]
+        return mask 
+
+    def draw(self, canvas_):
+        tmp_canvas = canvas()
+        standard_side = standard(self.build_point, self.pitch, self.yaw, self.width_num, self.building_thickness_num, self.floor_num, self.scale)
+        standard_side.side_eavs_len = standard_side.front_eavs_len
+        #mask_p0 = self.build_point
+        #mask_p1 = self.getHeightPoint(mask_p0, self.floor_height*(self.floor_num+0.5))
+        #mask_p2 = self.getHeightPoint(self.getDepthPoint(self.getWidthPoint(mask_p1,self.building_thickness_num*self.width_unit),self.building_thickness_num*self.width_unit), tan(self.roof_angle)*self.width_unit*self.building_thickness_num)
+        #mask_p3 = self.getHeightPoint(self.getWidthPoint(mask_p2, -self.building_thickness_num*self.width_unit-1), 1)
+        #mask_p4 = self.getHeightPoint(mask_p3, -self.floor_height*(self.floor_num+0.5)-tan(self.roof_angle)*self.width_unit*self.depth_num)
+        tmp_canvas.registerMask(self.getMask(True))
+        tmp_canvas = standard_side.draw(tmp_canvas)
+        canvas_.registerLineSegs(tmp_canvas.getLines())
+
+        tmp_canvas = canvas()
+        opposite_side = opposite_dir(self.build_point, self.pitch, self.yaw, self.width_num, self.building_thickness_num, self.floor_num, self.scale)
+        opposite_side.side_eavs_len = opposite_side.front_eavs_len
+        #mask_p3 = self.getHeightPoint(self.getDepthPoint(mask_p2, -self.building_thickness_num*self.width_unit-1), 1)
+        #mask_p4 = self.getHeightPoint(mask_p3, -self.floor_height*(self.floor_num+0.5)-tan(self.roof_angle)*self.width_unit*self.depth_num)
+        tmp_canvas.registerMask(self.getMask(False))
+        tmp_canvas = opposite_side.draw(tmp_canvas)
+        canvas_.registerLineSegs(tmp_canvas.getLines())
+        
+
+        return canvas_
 
