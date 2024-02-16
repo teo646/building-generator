@@ -101,23 +101,27 @@ class angled_roof_integrated(angled_roof_left):
         point4 = self.getHeightPoint(self.getDepthPoint(self.getWidthPoint(point2,self.building_thickness_num*self.width_unit/2),self.building_thickness_num*self.width_unit/2), tan(self.roof_angle)*(self.width_unit*self.building_thickness_num/2 + self.front_eavs_len))
         point5 = self.getHeightPoint(self.getDepthPoint(self.getWidthPoint(self.build_point,self.building_thickness_num*self.width_unit),self.building_thickness_num*self.width_unit), (self.floor_num+0.5)*self.floor_height)
         offset = (isLeft - 0.5)*200*self.scale
-        point6 = point(point4.x+offset, point5.y-1)
-        point7 = point(point1.x+offset, point1.y)
-        point2 = point(point1.x, point3.y)
-        if(self.roof_angle < self.pitch):
-            mask = [point1, point2, point3, point4, point5, point6, point7]
+        if(tan(pi/2-self.pitch) > ((self.floor_num+0.5)*self.floor_height-self.front_eavs_len*tan(self.roof_angle))/self.front_eavs_len*cos(self.roof_angle)):
+            point6 = point(point5.x+offset, point5.y-10)
+            point7 = point(point1.x+offset, point1.y)
+            point2 = point(point1.x, point3.y)
+            if(self.roof_angle < self.pitch):
+                mask = [point1, point2, point3, point4, point5, point6, point7]
+            else:
+                mask = [point1, point2, point3, point4, point6, point7]
         else:
-            mask = [point1, point2, point3, point4, point6, point7]
-
+            point6 = point(point5.x+offset, point5.y - 10)
+            point7 = point(point3.x+offset, point3.y)
+            mask = [point3, point5, point6, point7]
         return mask 
 
     def draw(self, canvas_):
         tmp_canvas = canvas()
         left_building = angled_roof_left(self.build_point, self.pitch, self.yaw, self.width_num, self.building_thickness_num, self.floor_num, self.scale)
         left_building.side_eavs_len = left_building.front_eavs_len
-        #mask = self.getMask(True)
-        #for i in range(len(mask)):
-        #    canvas_.registerLineSeg(line_seg([mask[i-1], mask[i]], (0,0,255), 5))
+#        mask = self.getMask(True)
+#        for i in range(len(mask)):
+#            canvas_.registerLineSeg(line_seg([mask[i-1], mask[i]], (0,0,255), 5))
         tmp_canvas.registerMask(self.getMask(True))
         tmp_canvas = left_building.draw(tmp_canvas)
         canvas_.registerLineSegs(tmp_canvas.getLines())
